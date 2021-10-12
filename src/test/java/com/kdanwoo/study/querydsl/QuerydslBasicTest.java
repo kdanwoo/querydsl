@@ -3,6 +3,7 @@ package com.kdanwoo.study.querydsl;
 import com.kdanwoo.study.querydsl.entity.Member;
 import com.kdanwoo.study.querydsl.entity.QMember;
 import com.kdanwoo.study.querydsl.entity.Team;
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static com.kdanwoo.study.querydsl.entity.QMember.member;
 import static org.assertj.core.api.Assertions.*;
@@ -101,6 +104,61 @@ public class QuerydslBasicTest {
                 .fetchOne(); //왜 fetchOne?
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
+
+    }
+
+    @Test
+    public void search(){
+        Member member = queryFactory.selectFrom(QMember.member)
+                .where(QMember.member.username.eq("member1").and(QMember.member.age.eq(10)))
+                .fetchOne();
+
+        assertThat(member.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void search1(){
+        Member member = queryFactory.selectFrom(QMember.member)
+                .where(QMember.member.username.eq("member1").and(QMember.member.age.eq(10)))
+                .fetchOne();
+
+        assertThat(member.getUsername()).isEqualTo("member1");
+    }
+
+    /**
+     * where() 에 파라미터로 검색조건을 추가하면 AND 조건이 추가됨
+     * 이경우 null 값은무시 메서드추출을활용해서동적쿼리를깔끔하게만들수있음 뒤에서설명
+     * */
+    @Test
+    public void searchAndParam(){
+        List<Member> member1 = queryFactory.selectFrom(member)
+                .where(member.username.eq("member1"), member.age.eq(10)).fetch();
+
+        assertThat(member1.get(0).getUsername()).isEqualTo("member1");
+
+    }
+
+    @Test
+    public void resultFetch(){
+
+        //리스트로 조회한다.
+        List<Member> fetch = queryFactory.selectFrom(member).fetch();
+
+        //단 건 엔티티 객체로 조회한다
+        Member member = queryFactory.selectFrom(QMember.member).fetchOne();
+
+        //처음 한 건 조회
+        Member memberFirst = queryFactory.selectFrom(QMember.member).fetchFirst();
+
+        //페이징에서 사용
+        QueryResults<Member> results = queryFactory
+                .selectFrom(QMember.member)
+                .fetchResults();
+
+        //count 쿼리로 변경
+        long count = queryFactory
+                .selectFrom(QMember.member)
+                .fetchCount();
 
     }
 }
